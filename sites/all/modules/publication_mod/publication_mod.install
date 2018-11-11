@@ -131,7 +131,7 @@ function publication_mod_install(){
   $nid = db_insert('publication_mod')
     ->fields(array(
       'pm_key' => 'blazegraph_url',
-      'pm_value' => 'http://139.91.183.97:28001/blazegraph/namespace/press_v3_3/sparql'
+      'pm_value' => 'http://localhost:9999/blazegraph/namespace/press/sparql'
     ))
     ->execute();
   $nid = db_insert('publication_mod')
