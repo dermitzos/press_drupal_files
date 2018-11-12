@@ -273,6 +273,9 @@ function publication_mod_menu(){
   return $menu;
 }
 
+/**
+ * Ajax Callback to make a request to Blazegraph and return the results.
+ */
 function publication_mod_ajax_callback_blazegraph(){
   $blazegraph_info = _publication_mod_get_blazegraph_info(array('blazegraph_url'));
   if(!empty($_GET['query']) || isset($_GET['uuid'])){
@@ -306,6 +309,11 @@ function publication_mod_ajax_callback_blazegraph(){
   echo $result->data;
 }
 
+/**
+ * Get the blazegraph information based on the keys provided
+ * @param Array $keys The keys available are ['blazegraph_url', 'blazegraph_prefix', 'blazegraph_orgs']
+ * @return Array An associative array containing the results
+ */
 function _publication_mod_get_blazegraph_info($keys){
   $or = db_or();
   // $or->condition('pm_key', 'blazegraph_url');
@@ -323,6 +331,11 @@ function _publication_mod_get_blazegraph_info($keys){
   return $result;
 }
 
+/**
+ * Set a key/value pair in the Module's database table.
+ * @param string $key 
+ * @param * $value 
+ */
 function _publication_mod_set_blazegraph_info($key, $value){
   db_merge('publication_mod')
   ->key(array('pm_key' => $key))
@@ -333,9 +346,8 @@ function _publication_mod_set_blazegraph_info($key, $value){
 }
 
 /**
- * Implements hook_menu_local_tasks_alter
+ * Implements hook_menu_local_tasks_alter()
  */
-
 function publication_mod_menu_local_tasks_alter(&$data, $router_item, $root_path){
   if (substr($root_path, 0, 5) === 'node/'){
     foreach ($router_item['page_arguments'] as $key => $argument) {
@@ -408,20 +420,29 @@ function publication_mod_menu_local_tasks_alter(&$data, $router_item, $root_path
   }
 }
 
+/**
+ * Creates a body of the static page of a publication.
+ * Returns an associative array with the following fields:
+ * 
+ * array['title']                     string The title of the page
+ *      ['html']                      string The HTML of the body
+ *      ['summary']                   string The summary of the page
+ *      ['category']                  string The category of the publication
+ *      ['contributors']              array Containing the information about the publication's contributors
+ *          [contributor_type]        array Containing the information of the contributors of a certain type
+ *              [contributor_index]   array Contains the contributor's information
+ *                  ['name']          string The full name of the contributor
+ *                  ['uri']           string The URI of the contributor
+ * 
+ * 
+ * @param string $pub_uri The URI of the publication in Blazegraph
+ * @return array See above for the array explaination
+ */
 function _publication_mod_create_page_body($pub_uri){
   global $base_url;
   $blazegraph_info = _publication_mod_get_blazegraph_info(array('blazegraph_url', 'blazegraph_prefix'));
   $dbURL = $blazegraph_info['blazegraph_url'];
   $ontologyPrefix = $blazegraph_info['blazegraph_prefix'];
-
-  // $query = 'prefix press: <'. $ontologyPrefix. '>
-  //           select * where{
-  //             BIND (<'. $pub_uri .'> as ?pub).
-  //             ?pub ?p ?o.
-  //             ?p rdf:type owl:DatatypeProperty.
-  //             FILTER(?p != press:creationDate && ?p != press:modifiedDate && ?p != press:publicationUuid).
-  //             ?p rdfs:label ?plabel.
-  //           }';
 
   $query = 'prefix press: <'. $ontologyPrefix. '>
             select * where{
@@ -606,7 +627,7 @@ function _publication_mod_create_page_body($pub_uri){
 
 /**
  * Checks if use has one of the roles in arguments
- * @return type
+ * @return boolean
  */
 function publication_mod_user_has_role(){
   global $user;
@@ -620,8 +641,17 @@ function publication_mod_user_has_role(){
 }
 
 /**
- * Returns user information
- * @return string
+ * Returns current user information
+ * The return array is an associative array with the following fields:
+ * 
+ * array ['uuid']       string The UUID of the user
+ *       ['name']       string The name of the user
+ *       ['mail']       string The mail of the user
+ *       ['lab']        string The lab of the user
+ *       ['roles']      Array Contains the roles of the user
+ *       ['anonymous']  boolean If the user is anonymous (not logged in)
+ * 
+ * @return array
  */
 function _get_user_info_to_json(){
   global $user;
@@ -668,7 +698,7 @@ function _get_user_info_to_json(){
 }
 
 /**
- * Returns lab information
+ * Returns lab information in json format
  * @return string
  */
 function _get_labs_to_json(){
@@ -721,6 +751,16 @@ function _add_presslib_library(){
   drupal_add_css($module_path . "/css/fontello.css");
 }
 
+/**
+ * Creates an element with the title of the publication and the link to it's page, 
+ * it's contributors and their corresponding links, in order to be added to the All Publications page
+ * @param DOMDocument $doc the doc that the element will be created
+ * @param string $uuid The uuid of the publication
+ * @param string $title The title of the publication
+ * @param string $path The path of the publication's static page
+ * @param array $contributors An array containing the contributors' information
+ * @return DOMElement The newly created element
+ */
 function _publication_mod_create_pub_dom_element($doc, $uuid, $title, $path, $contributors){
   $element = $doc->createElement('div');
   $element->setAttribute('id', $uuid);
@@ -755,7 +795,7 @@ function _publication_mod_create_pub_dom_element($doc, $uuid, $title, $path, $co
   return $element;
 }
 
-/*
+/**
  * Handles the new publication addition.
  */
 function publication_mod_ajax_callback($title='', $category='', $body='', $summary='', $uuid='', $contributors=array()){
@@ -769,19 +809,6 @@ function publication_mod_ajax_callback($title='', $category='', $body='', $summa
     $contributors = json_decode($_POST['contributors']);
     $function_called = false;
   }
-  // $values = explode("&", $value);
-  // print_r($values);
-  // $vals;
-  // $i=0;
-  // foreach($values as $val){
-  //   $vals[$i++] = explode("=", $val);
-  // }
-  // print_r($vals);
-  // echo "<br />";
-  // print_r($_POST);
-  // echo "<br />";
-  // print_r($_FILES);
-  // return;
 
   // entity_create replaces the procedural steps in the first example of
   // creating a new object $node and setting its 'type' and uid property
@@ -898,6 +925,10 @@ function publication_mod_ajax_callback($title='', $category='', $body='', $summa
   // echo drupal_get_path_alias("node/" . $ewrapper->value()->nid, null);
 }
 
+/**
+ * A callback function to update the static pages of publications based on their blazegraph URIs
+ * @param array $blazegraph_uris An array containing the blazegraph URIs as string
+ */
 function publication_mod_update_pubs($blazegraph_uris = array()){
   if(empty($blazegraph_uris)){
     $blazegraph_uris = $_POST['blazegraph_uris'];
@@ -931,6 +962,9 @@ function publication_mod_update_pubs($blazegraph_uris = array()){
   return;
 }
 
+/**
+ * Callback function to edit the static page of a publication
+ */
 function publication_mod_ajax_callback_edit_pub(){
   global $user;
   $uuid = $_POST['uuid'];
@@ -1090,7 +1124,7 @@ function publication_mod_ajax_callback_get_path(){
 
 
 /**
- * Implements hook_user_presave
+ * Implements hook_user_presave() in order to update the user info in Blazegraph
  */
 function publication_mod_user_presave(&$edit, $account, $category){
 
@@ -1187,38 +1221,6 @@ function publication_mod_user_presave(&$edit, $account, $category){
           '%result' => print_r($result, true),
         ), WATCHDOG_NOTICE);
       }
-    }else{  //User is not found in blazegraph
-      // $uuid = 'urn:uuid:' . $account->uuid;
-      // $edit['pub_mod_field_blazegraph_uuid']['und'][0]['value'] = $uuid;
-
-      // $sparql = "prefix foaf: <http://xmlns.com/foaf/0.1/>".
-      //   "prefix press:<". $prefix . ">".
-      //   "INSERT DATA{".
-      //     "<". $uuid ."> rdf:type foaf:Person. ".
-      //     "<". $uuid."> press:personUuid \u0022urn:uuid:". $uuid ."\u0022. " .
-      //     "<". $uuid."> foaf:familyName \u0022". $account->pub_mod_field_last_name['und'][0]['value'] ."\u0022. " .
-      //     "<". $uuid."> foaf:givenName \u0022" . $account->pub_mod_field_first_name['und'][0]['value'] ."\u0022. ".
-      //     "<". $uuid."> <". $prefix ."personGroup> \u0022FORTH_ICS_Author\u0022. ".
-      //     "<". $uuid."> foaf:mbox \u0022mailto:". $account->mail . "\u0022. ";
-
-      //   if(isset($org) && !empty($org)){
-      //     $sparql .= "<". $uuid."> <". $prefix ."memberOf> <". $prefix . "Organization/" . $account->pub_mod_field_organization['und'][0]['option'] .">. ";
-      //   }
-
-      //   $sparql .= "}";
-
-      //   $q = http_build_query(array('update' => $sparql));
-
-      //   $options = array(
-      //     'headers' => array(
-      //       'Accept'=>'html',
-      //       'content-type'=> 'application/x-www-form-urlencoded'),
-      //     'method' => 'POST',
-      //     'data' => $q
-      //   );
-
-      //   $result = drupal_http_request($blazegraph_url, $options);
-      //   watchdog("Blazegraph Person Insert", print_r($result, true), array(), WATCHDOG_NOTICE);
     }
   }else{ //Account update, not new
     $needs_update = FALSE;
@@ -1320,7 +1322,7 @@ function publication_mod_user_presave(&$edit, $account, $category){
 }
 
 /**
- * Implements hook_user_cancel
+ * Implements hook_user_cancel()
  */
 function publication_mod_user_cancel($edit, $account, $method){
   watchdog('publication_mod', '$edit <pre>%edit</pre><br/>$account <pre>%account</pre><br/>$method <pre>%method</pre>',
@@ -1332,7 +1334,7 @@ function publication_mod_user_cancel($edit, $account, $method){
 }
 
 /**
- * Implements hook_user_insert
+ * Implements hook_user_insert() in order to add the user in Blazegraph on Insert
  */
 function publication_mod_user_insert(&$edit, $account, $category){
 

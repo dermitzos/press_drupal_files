@@ -1,8 +1,10 @@
 <?php
 // Copyright FORTH-ICS, Emmanouil Dermitzakis
 
-// Custom Laboratory Field Type
-
+/**
+ * Implements the hook_field_schema() to create the database entry for the new
+ * field type
+ */
 function pub_mod_org_field_field_schema($field){
   $schema['columns'] = array(
     'option' => array(

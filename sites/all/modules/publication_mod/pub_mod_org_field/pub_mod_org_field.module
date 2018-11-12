@@ -46,52 +46,27 @@ function pub_mod_org_field_field_widget_info_alter(&$info){
   }
 }
 
+/**
+ * Implements hook_field_validate()
+ */
 function pub_mod_org_field_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors){
   foreach ($items as $delta => $item) {
     if(!(empty($item['option']))){
-      // if(!preg_match('([A-Za-z0-9_])+', $item['option'])){
-        // $errors[$field['field_name']][$langcode][$delta][] = array(
-        //   'error' => 'pub_mod_field_invalid',
-        //   'message' => t('Lab Value must be one word and contain letters, numbers and _')
-        // );
-      // }
+
     }
   }
 }
 
+/**
+ * Implements hook_options_list() that returns the list of options to be displayed
+ * for a field
+ */
 function pub_mod_org_field_options_list($field, $instance, $entity_type, $entity){
 
   if(!module_exists('publication_mod')){
     return array();
   }
   $blazegraph_info = _publication_mod_get_blazegraph_info(array('blazegraph_orgs'));
-  /*$dbURL = $blazegraph_info['blazegraph_url'];
-  $ontologyPrefix = $blazegraph_info['blazegraph_prefix'];
-
-  $query = 'prefix press:<' . $ontologyPrefix .'>'.
-'select ?org ?org_name where{'.
-  '?org rdf:type press:Organization;'.
-       'press:organizationName ?org_name.'.
-'}';
-
-  $q = http_build_query(array('query' => $query));
-
-  $options = array(
-    'headers' => array(
-      'Accept'=>'application/sparql-results+json',
-      'content-type'=> 'application/x-www-form-urlencoded'),
-    'method' => 'POST',
-    'data' => $q
-  );
-
-  $result = drupal_http_request($dbURL, $options);
-
-  $data = json_decode($result->data);
-  $options = array();*/
-
-  // foreach($data->results->bindings as $org){
-  //   $options[$org->org->value] = $org->org->value;  //TODO CHANGE
-  // }
 
   $orgs = explode("\n", $blazegraph_info['blazegraph_orgs']);
   $options = array();
@@ -109,6 +84,10 @@ function pub_mod_org_field_options_list($field, $instance, $entity_type, $entity
   return $options;
 }
 
+/**
+ * Implements hook_field_formatter_info()
+ * @return type
+ */
 function pub_mod_org_field_field_formatter_info(){
   return array(
     'pub_mod_organization_formatter' => array(
@@ -118,6 +97,9 @@ function pub_mod_org_field_field_formatter_info(){
   );
 }
 
+/**
+ * Implements hook_field_formatter_view() to build a renderable array for the field value
+ */
 function pub_mod_org_field_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
   //Currently we only have one display option, use switch
@@ -159,7 +141,9 @@ function pub_mod_org_field_field_formatter_view($entity_type, $entity, $field, $
   return $element;
 }
 
-
+/**
+ * Implements hook_feeds_processor_targets_alter()
+ */
 function pub_mod_org_field_feeds_processor_targets_alter(&$targets, $entity_type, $bundle){
   if ($entity_type == 'user' && $bundle == 'user'){
     foreach(field_info_instances($entity_type, $bundle) as $name => $instance){
@@ -181,6 +165,9 @@ function pub_mod_org_field_feeds_processor_targets_alter(&$targets, $entity_type
   }
 }
 
+/**
+ * Callback function to set the selected value to the entity
+ */
 function pub_mod_org_field_target_setter($source, $entity, $target, $values, $mapping){
   // watchdog('publication_mod', 'target: %target <br> value: %value<br>mapping: %mapping', 
   //   array(

@@ -566,6 +566,9 @@ function publication_mod_orgs_form_submit($form, $form_state){
   }
 }
 
+/**
+ * Form Submition handler to get the Organizations from Blazegraph.
+ */
 function publication_mod_import_orgs($form, $form_state){
   $blazegraph_info = _publication_mod_get_blazegraph_info(array('blazegraph_url', 'blazegraph_prefix'));
   $ontologyPrefix = $blazegraph_info['blazegraph_prefix'];
